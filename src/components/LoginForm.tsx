@@ -58,7 +58,6 @@ export function LoginForm() {
         <p className="muted" style={{ marginTop: "1.2rem" }}>
           No account? <Link href="/register">Register</Link>
         </p>
-        <p className="muted">Demo: ava@strata.local / strata-demo-1</p>
       </div>
     </div>
   );

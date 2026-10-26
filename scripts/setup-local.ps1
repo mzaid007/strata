@@ -24,4 +24,4 @@ npx prisma db push
 npm run db:seed
 Write-Host ""
 Write-Host "Setup OK. Start with:  npm run dev" -ForegroundColor Green
-Write-Host "Demo: ava@strata.local / strata-demo-1"
+Write-Host "Register at http://localhost:3000/register, or use accounts printed by the seed script above."

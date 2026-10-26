@@ -1,7 +1,9 @@
 {
   "name": "strata",
   "version": "0.1.0",
-  "private": true,
+  "private": false,
+  "license": "MIT",
+  "author": "mzaid007",
   "scripts": {
     "dev": "next dev",
     "build": "prisma generate && next build",
