@@ -14,7 +14,7 @@ const fraunces = Fraunces({
 
 export const metadata: Metadata = {
   title: "Strata",
-  description: "Internal work management — clean-room Asana-inspired",
+  description: "Hobby open-source work and project management",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
