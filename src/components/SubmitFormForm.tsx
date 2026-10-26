@@ -21,7 +21,7 @@ export function SubmitFormForm({ formId, fields }: { formId: string; fields: Fie
       <FormBanner state={state} />
       {fields.map((field) => {
         const name = `field_${field.id}`;
-        const err = state.fieldErrors?.[name];
+        const err = state.ok === false ? state.fieldErrors?.[name] : undefined;
         return (
           <div className="field" key={field.id}>
             <label htmlFor={name}>

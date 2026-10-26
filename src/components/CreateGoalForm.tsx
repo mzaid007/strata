@@ -13,7 +13,9 @@ export function CreateGoalForm() {
       <div className="field">
         <label htmlFor="title">Goal</label>
         <input id="title" name="title" required placeholder="Ship Q4 launch readiness" />
-        {state.fieldErrors?.title ? <p className="field-error">{state.fieldErrors.title}</p> : null}
+        {state.ok === false && state.fieldErrors?.title ? (
+          <p className="field-error">{state.fieldErrors.title}</p>
+        ) : null}
       </div>
       <div className="field">
         <label htmlFor="description">Notes</label>

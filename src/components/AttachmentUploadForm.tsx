@@ -15,7 +15,7 @@ export function AttachmentUploadForm({ taskId }: { taskId: string }) {
       <div className="field">
         <label htmlFor="file">Upload file</label>
         <input id="file" name="file" type="file" required />
-        {state.fieldErrors?.file ? (
+        {state.ok === false && state.fieldErrors?.file ? (
           <p className="field-error">{state.fieldErrors.file}</p>
         ) : null}
       </div>
