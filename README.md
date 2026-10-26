@@ -5,9 +5,9 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/mzaid007/strata)
 
-**Strata** is an open-source, Asana-like work management app: projects, multi-home tasks, boards, inbox, goals, and optional free-tier AI assists.
+**Strata** is a hobby open-source project: a work management app in the spirit of Asana — projects, multi-home tasks, boards, inbox, goals, and optional free-tier AI assists. Built for learning and self-hosting, not as an internal company product.
 
-**Demo:** [https://strata-six-neon.vercel.app](https://strata-six-neon.vercel.app) — a hosted instance for browsing the UI. Create your own account there, or run locally and register / seed your own workspace.
+**Demo:** [https://strata-six-neon.vercel.app](https://strata-six-neon.vercel.app) — try the UI on a hosted instance. Sign up there, or run locally and register / seed your own workspace.
 
 ## Stack
 
@@ -27,7 +27,7 @@
 - **Calendar & timeline** — project scheduling views
 - **Goals, portfolios, workload** — higher-level planning surfaces
 - **Forms & rules** — lightweight intake and automation hooks
-- **Admin** — thin workspace administration
+- **Admin** — basic workspace settings
 - **Optional AI** — task summarize / draft / suggest via free providers (see below)
 - **Public forms** — shareable form links under `/f/[slug]`
 
