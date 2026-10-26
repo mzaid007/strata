@@ -18,8 +18,28 @@ async function ensureUser(email: string, name: string, password: string) {
 }
 
 async function main() {
-  const owner = await ensureUser("ava@strata.local", "Ava Chen", "strata-demo-1");
-  const member = await ensureUser("ben@strata.local", "Ben Ortiz", "strata-demo-1");
+  if (process.env.DEMO_SEED !== "1") {
+    console.log(
+      "Skipping demo seed. Set DEMO_SEED=1 and SEED_PASSWORD (≥8 chars) in .env for local test users, or register at /register.",
+    );
+    return;
+  }
+
+  const password = process.env.SEED_PASSWORD?.trim() ?? "";
+  if (password.length < 8) {
+    throw new Error(
+      "DEMO_SEED=1 requires SEED_PASSWORD in the environment (min 8 characters). Do not commit passwords.",
+    );
+  }
+
+  const ownerEmail = (process.env.SEED_OWNER_EMAIL ?? "ava@strata.local").trim().toLowerCase();
+  const memberEmail = (process.env.SEED_MEMBER_EMAIL ?? "ben@strata.local").trim().toLowerCase();
+  if (ownerEmail === memberEmail) {
+    throw new Error("SEED_OWNER_EMAIL and SEED_MEMBER_EMAIL must differ.");
+  }
+
+  const owner = await ensureUser(ownerEmail, "Ava Chen", password);
+  const member = await ensureUser(memberEmail, "Ben Ortiz", password);
 
   const org = await prisma.organization.upsert({
     where: { slug: "strata-demo" },
@@ -262,11 +282,12 @@ async function main() {
   });
 
   console.log("Seeded Strata demo workspace.");
-  console.log("  Login: ava@strata.local / strata-demo-1  (owner)");
-  console.log("  Login: ben@strata.local / strata-demo-1  (member)");
+  console.log(`  Owner:  ${ownerEmail}`);
+  console.log(`  Member: ${memberEmail}`);
+  console.log("  Password: set via SEED_PASSWORD (value not printed)");
   console.log(`  Portfolio: ${portfolio.name}`);
   console.log(`  Form: /f/${intake.slug}`);
-  console.log("  Multi-home demo: “Wire email/password auth” lives in Product Launch + Ops Checklist.");
+  console.log('  Multi-home demo: “Wire email/password auth” lives in Product Launch + Ops Checklist.');
 }
 
 main()

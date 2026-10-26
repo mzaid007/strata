@@ -7,7 +7,7 @@
 
 **Strata** is a hobby open-source work and project management app — projects, multi-home tasks, boards, inbox, goals, and optional free-tier AI assists. Built for learning and self-hosting.
 
-**Demo:** [https://strata-six-neon.vercel.app](https://strata-six-neon.vercel.app) — try the UI on a hosted instance. Sign up there, or run locally and register / seed your own workspace.
+**Live instance:** [https://strata-six-neon.vercel.app](https://strata-six-neon.vercel.app) — try the UI on a hosted instance. Sign up there, or run locally and register at `/register`.
 
 ## Stack
 
@@ -53,11 +53,13 @@ Edit `.env` (see [Environment variables](#environment-variables)):
 ```bash
 npm install
 npx prisma db push
-npm run db:seed    # optional: sample workspace for local exploration
+npm run db:seed    # no-op unless DEMO_SEED=1 (see below)
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) and **register** a new account, or use whatever accounts the seed script prints to your terminal (local only). Prefer **localhost** over a LAN IP for sign-in.
+Open [http://localhost:3000](http://localhost:3000) and **register** a new account. Prefer **localhost** over a LAN IP for sign-in.
+
+Optional demo seed for local testing: set `DEMO_SEED=1` and `SEED_PASSWORD` (≥8 chars) in `.env`, then `npm run db:seed`. The password is never hardcoded or printed — only read from your environment. Optional `SEED_OWNER_EMAIL` / `SEED_MEMBER_EMAIL` override the default local test accounts.
 
 On Windows you can also run:
 
@@ -101,7 +103,7 @@ Set any combination; only configured keys are used.
 3. Add env vars: `DATABASE_URL` (Neon), `BETTER_AUTH_SECRET` (≥ 32 chars). For a custom domain set `BETTER_AUTH_URL` / `NEXT_PUBLIC_APP_URL` to that `https://…` origin; otherwise Vercel’s `VERCEL_URL` is enough for the default `*.vercel.app` URL.
 4. Optional: add one or more of `GROQ_API_KEY`, `GOOGLE_GENERATIVE_AI_API_KEY`, `OPENROUTER_API_KEY` (and model overrides if needed).
 5. Build command is already `prisma generate && next build` via `npm run build`.
-6. Once against production Postgres, run `npx prisma db push` (and optionally `npm run db:seed`) from a trusted machine — do not put seed passwords in production UI or docs.
+6. Once against production Postgres, run `npx prisma db push` from a trusted machine. Prefer registering accounts in the UI; do **not** set `DEMO_SEED=1` against production.
 
 ## Core model
 

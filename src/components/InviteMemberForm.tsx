@@ -18,7 +18,7 @@ export function InviteMemberForm() {
           name="email"
           type="email"
           required
-          placeholder="ben@strata.local"
+          placeholder="user@example.com"
           aria-invalid={state.ok === false && !!state.fieldErrors?.email}
         />
         {state.ok === false && state.fieldErrors?.email ? (

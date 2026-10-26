@@ -21,7 +21,9 @@ if (-not (Test-Path .git)) {
 
 npm install
 npx prisma db push
+# Sample seed is opt-in (DEMO_SEED=1 + SEED_PASSWORD). Default path is register-first.
 npm run db:seed
 Write-Host ""
 Write-Host "Setup OK. Start with:  npm run dev" -ForegroundColor Green
-Write-Host "Register at http://localhost:3000/register, or use accounts printed by the seed script above."
+Write-Host "Register at http://localhost:3000/register"
+Write-Host "Optional demo seed: set DEMO_SEED=1 and SEED_PASSWORD in .env, then npm run db:seed"
