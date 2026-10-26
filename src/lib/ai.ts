@@ -1,4 +1,7 @@
+import { getAppOrigin } from "@/lib/app-origin";
+
 export type AiKind = "summarize" | "draft" | "suggest";
+
 
 type Provider = "groq" | "google" | "openrouter";
 
@@ -73,7 +76,8 @@ async function callOpenRouter(apiKey: string, model: string, system: string, use
     headers: {
       Authorization: `Bearer ${apiKey}`,
       "Content-Type": "application/json",
-      "HTTP-Referer": process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000",
+      "HTTP-Referer": getAppOrigin(process.env.NEXT_PUBLIC_APP_URL),
+
       "X-Title": "Strata",
     },
     body: JSON.stringify({

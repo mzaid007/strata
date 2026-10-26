@@ -1,6 +1,8 @@
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
+import { getAppOrigin } from "@/lib/app-origin";
 import { prisma } from "@/lib/prisma";
+
 
 /** Loopback + RFC1918 — safe to trust in local/dev only. */
 function isDevFriendlyOrigin(origin: string): boolean {
@@ -24,7 +26,8 @@ function isDevFriendlyOrigin(origin: string): boolean {
 
 export const auth = betterAuth({
   database: prismaAdapter(prisma, { provider: "postgresql" }),
-  baseURL: process.env.BETTER_AUTH_URL,
+  // BETTER_AUTH_URL → VERCEL_URL → localhost (see getAppOrigin)
+  baseURL: getAppOrigin(process.env.BETTER_AUTH_URL),
   emailAndPassword: {
     enabled: true,
     minPasswordLength: 8,
@@ -34,18 +37,20 @@ export const auth = betterAuth({
     updateAge: 60 * 60 * 24,
   },
   /**
-   * Prefer `http://localhost:3000` in .env.
+   * Prefer `http://localhost:3000` in local .env.
+   * On Vercel, omit BETTER_AUTH_URL / NEXT_PUBLIC_APP_URL and rely on VERCEL_URL
+   * unless using a custom domain (then set BETTER_AUTH_URL to that origin).
    * Dev also trusts the browser Origin when it is loopback/LAN so
    * `http://192.168.x.x:3000` sign-in is not rejected after OPTIONS.
    * Extra origins: comma-separated `BETTER_AUTH_TRUSTED_ORIGINS` (read by Better Auth).
    */
   trustedOrigins: async (request) => {
     const origins = [
-      process.env.BETTER_AUTH_URL,
-      process.env.NEXT_PUBLIC_APP_URL,
+      getAppOrigin(process.env.BETTER_AUTH_URL),
+      getAppOrigin(process.env.NEXT_PUBLIC_APP_URL),
       "http://localhost:3000",
       "http://127.0.0.1:3000",
-    ].filter((v): v is string => Boolean(v));
+    ];
 
     if (process.env.NODE_ENV !== "production" && request) {
       const origin = request.headers.get("origin");
@@ -61,5 +66,6 @@ export const auth = betterAuth({
     return [...new Set(origins)];
   },
 });
+
 
 export type Session = typeof auth.$Infer.Session;
