@@ -2,36 +2,39 @@ import { getAppOrigin } from "@/lib/app-origin";
 
 export type AiKind = "summarize" | "draft" | "suggest";
 
-
 type Provider = "groq" | "google" | "openrouter";
 
-function pickProvider(): { provider: Provider; apiKey: string; model: string } | null {
+type ProviderConfig = { provider: Provider; apiKey: string; model: string };
+
+/** Configured providers in fallback order: Groq → Google → OpenRouter. */
+function configuredProviders(): ProviderConfig[] {
+  const list: ProviderConfig[] = [];
   if (process.env.GROQ_API_KEY) {
-    return {
+    list.push({
       provider: "groq",
       apiKey: process.env.GROQ_API_KEY,
       model: process.env.GROQ_MODEL || "llama-3.1-8b-instant",
-    };
+    });
   }
   if (process.env.GOOGLE_GENERATIVE_AI_API_KEY) {
-    return {
+    list.push({
       provider: "google",
       apiKey: process.env.GOOGLE_GENERATIVE_AI_API_KEY,
       model: process.env.GOOGLE_AI_MODEL || "gemini-2.0-flash",
-    };
+    });
   }
   if (process.env.OPENROUTER_API_KEY) {
-    return {
+    list.push({
       provider: "openrouter",
       apiKey: process.env.OPENROUTER_API_KEY,
       model: process.env.OPENROUTER_MODEL || "meta-llama/llama-3.2-3b-instruct:free",
-    };
+    });
   }
-  return null;
+  return list;
 }
 
 export function aiConfigured(): boolean {
-  return pickProvider() !== null;
+  return configuredProviders().length > 0;
 }
 
 function systemFor(kind: AiKind) {
@@ -118,15 +121,39 @@ async function callGoogle(apiKey: string, model: string, system: string, user: s
   return data.candidates?.[0]?.content?.parts?.map((p) => p.text || "").join("").trim() || "";
 }
 
+async function callProvider(
+  cfg: ProviderConfig,
+  system: string,
+  prompt: string,
+): Promise<string> {
+  if (cfg.provider === "groq") return callGroq(cfg.apiKey, cfg.model, system, prompt);
+  if (cfg.provider === "google") return callGoogle(cfg.apiKey, cfg.model, system, prompt);
+  return callOpenRouter(cfg.apiKey, cfg.model, system, prompt);
+}
+
+/**
+ * Runs an AI assist request, trying configured providers in order until one succeeds.
+ * Order: Groq → Google → OpenRouter (only keys present in env are tried).
+ */
 export async function runAiAssist(kind: AiKind, prompt: string): Promise<string> {
-  const cfg = pickProvider();
-  if (!cfg) {
+  const providers = configuredProviders();
+  if (providers.length === 0) {
     throw new Error(
       "No AI key configured. Set GROQ_API_KEY, GOOGLE_GENERATIVE_AI_API_KEY, or OPENROUTER_API_KEY.",
     );
   }
   const system = systemFor(kind);
-  if (cfg.provider === "groq") return callGroq(cfg.apiKey, cfg.model, system, prompt);
-  if (cfg.provider === "google") return callGoogle(cfg.apiKey, cfg.model, system, prompt);
-  return callOpenRouter(cfg.apiKey, cfg.model, system, prompt);
+  const errors: string[] = [];
+
+  for (const cfg of providers) {
+    try {
+      const text = await callProvider(cfg, system, prompt);
+      if (text) return text;
+      errors.push(`${cfg.provider}: empty response`);
+    } catch (e) {
+      errors.push(`${cfg.provider}: ${e instanceof Error ? e.message : String(e)}`);
+    }
+  }
+
+  throw new Error(`All AI providers failed. ${errors.join("; ")}`);
 }
