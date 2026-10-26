@@ -6,6 +6,13 @@ type Provider = "groq" | "google" | "openrouter";
 
 type ProviderConfig = { provider: Provider; apiKey: string; model: string };
 
+/** Current free/developer-tier defaults (verified Oct 2026). Override via env. */
+export const AI_DEFAULT_MODELS = {
+  groq: "openai/gpt-oss-20b",
+  google: "gemini-3.5-flash-lite",
+  openrouter: "openrouter/free",
+} as const;
+
 /** Configured providers in fallback order: Groq → Google → OpenRouter. */
 function configuredProviders(): ProviderConfig[] {
   const list: ProviderConfig[] = [];
@@ -13,21 +20,21 @@ function configuredProviders(): ProviderConfig[] {
     list.push({
       provider: "groq",
       apiKey: process.env.GROQ_API_KEY,
-      model: process.env.GROQ_MODEL || "llama-3.1-8b-instant",
+      model: process.env.GROQ_MODEL || AI_DEFAULT_MODELS.groq,
     });
   }
   if (process.env.GOOGLE_GENERATIVE_AI_API_KEY) {
     list.push({
       provider: "google",
       apiKey: process.env.GOOGLE_GENERATIVE_AI_API_KEY,
-      model: process.env.GOOGLE_AI_MODEL || "gemini-2.0-flash",
+      model: process.env.GOOGLE_AI_MODEL || AI_DEFAULT_MODELS.google,
     });
   }
   if (process.env.OPENROUTER_API_KEY) {
     list.push({
       provider: "openrouter",
       apiKey: process.env.OPENROUTER_API_KEY,
-      model: process.env.OPENROUTER_MODEL || "meta-llama/llama-3.2-3b-instruct:free",
+      model: process.env.OPENROUTER_MODEL || AI_DEFAULT_MODELS.openrouter,
     });
   }
   return list;
@@ -48,7 +55,23 @@ function systemFor(kind: AiKind) {
   }
 }
 
+async function readErrorDetail(res: Response): Promise<string> {
+  try {
+    const text = (await res.text()).trim().replace(/\s+/g, " ");
+    if (!text) return "";
+    return text.length > 180 ? `${text.slice(0, 180)}…` : text;
+  } catch {
+    return "";
+  }
+}
+
+function httpError(label: string, res: Response, detail: string, model: string) {
+  const extra = detail ? ` — ${detail}` : "";
+  return new Error(`${label} error ${res.status} (model=${model})${extra}`);
+}
+
 async function callGroq(apiKey: string, model: string, system: string, user: string) {
+  // OpenAI-compatible Chat Completions — https://console.groq.com/docs/api-reference
   const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
     method: "POST",
     headers: {
@@ -65,7 +88,7 @@ async function callGroq(apiKey: string, model: string, system: string, user: str
     }),
   });
   if (!res.ok) {
-    throw new Error(`Groq error ${res.status}`);
+    throw httpError("Groq", res, await readErrorDetail(res), model);
   }
   const data = (await res.json()) as {
     choices?: { message?: { content?: string } }[];
@@ -74,13 +97,13 @@ async function callGroq(apiKey: string, model: string, system: string, user: str
 }
 
 async function callOpenRouter(apiKey: string, model: string, system: string, user: string) {
+  // OpenAI-compatible — https://openrouter.ai/docs/api/reference/overview
   const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
     method: "POST",
     headers: {
       Authorization: `Bearer ${apiKey}`,
       "Content-Type": "application/json",
       "HTTP-Referer": getAppOrigin(process.env.NEXT_PUBLIC_APP_URL),
-
       "X-Title": "Strata",
     },
     body: JSON.stringify({
@@ -93,7 +116,7 @@ async function callOpenRouter(apiKey: string, model: string, system: string, use
     }),
   });
   if (!res.ok) {
-    throw new Error(`OpenRouter error ${res.status}`);
+    throw httpError("OpenRouter", res, await readErrorDetail(res), model);
   }
   const data = (await res.json()) as {
     choices?: { message?: { content?: string } }[];
@@ -102,7 +125,8 @@ async function callOpenRouter(apiKey: string, model: string, system: string, use
 }
 
 async function callGoogle(apiKey: string, model: string, system: string, user: string) {
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+  // Gemini generateContent — https://ai.google.dev/api/generate-content
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(apiKey)}`;
   const res = await fetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -113,7 +137,7 @@ async function callGoogle(apiKey: string, model: string, system: string, user: s
     }),
   });
   if (!res.ok) {
-    throw new Error(`Google AI error ${res.status}`);
+    throw httpError("Google AI", res, await readErrorDetail(res), model);
   }
   const data = (await res.json()) as {
     candidates?: { content?: { parts?: { text?: string }[] } }[];
