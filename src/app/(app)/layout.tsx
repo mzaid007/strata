@@ -4,12 +4,17 @@ import { AppNav } from "@/components/AppNav";
 import { UnreadBadge } from "@/components/UnreadBadge";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
-  const { session } = await requireOrgContext();
+  const { session, org, memberships } = await requireOrgContext();
 
   return (
     <div className="app-shell">
       <AppNav
         userName={session.user.name}
+        workspaces={memberships.map((m) => ({
+          id: m.organizationId,
+          name: m.organization.name,
+        }))}
+        activeOrgId={org.id}
         inboxBadge={
           <Suspense fallback={null}>
             <UnreadBadge />

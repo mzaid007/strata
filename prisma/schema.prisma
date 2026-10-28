@@ -226,7 +226,7 @@ model Attachment {
   fileName     String
   mimeType     String
   sizeBytes    Int
-  /// Local path or remote URL — Core stores metadata; blob under /uploads locally
+  /// Relative path under ./uploads locally, or Vercel Blob pathname when configured
   storageKey   String
   createdAt    DateTime @default(now())
 

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import type { ReactNode } from "react";
 import { authClient } from "@/lib/auth-client";
+import { WorkspaceSwitcher } from "@/components/WorkspaceSwitcher";
 
 const links = [
   { href: "/home", label: "Home" },
@@ -19,9 +20,13 @@ const links = [
 
 export function AppNav({
   userName,
+  workspaces,
+  activeOrgId,
   inboxBadge,
 }: {
   userName: string;
+  workspaces: { id: string; name: string }[];
+  activeOrgId: string;
   inboxBadge?: ReactNode;
 }) {
   const pathname = usePathname();
@@ -38,6 +43,7 @@ export function AppNav({
       <p className="brand">
         Strata<span>.</span>
       </p>
+      <WorkspaceSwitcher workspaces={workspaces} activeOrgId={activeOrgId} />
       <nav className="nav">
         {links.map((l) => (
           <Link

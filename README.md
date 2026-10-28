@@ -85,6 +85,12 @@ Do **not** commit `.env`. Copy from `.env.example`.
 | `GOOGLE_AI_MODEL` | No | Override Google model |
 | `OPENROUTER_API_KEY` | No | [OpenRouter](https://openrouter.ai/) key (last fallback) |
 | `OPENROUTER_MODEL` | No | Defaults to `openrouter/free` |
+| `BLOB_READ_WRITE_TOKEN` | No | Vercel Blob token for durable attachment storage. Without it, files are written to `./uploads` (local disk). |
+| `BLOB_ACCESS` | No | Access mode for Blob uploads: `public` (default) or `private`. Must match the store configuration. |
+
+### Attachments storage
+
+Attachments use Vercel Blob when `BLOB_READ_WRITE_TOKEN` is set. Otherwise they are written to `./uploads` on local disk, which works for self-hosting but is **ephemeral on Vercel** — files disappear on redeploy or between serverless invocations. Attachments saved before a Blob token was added still resolve from local disk as a fallback.
 
 ### Free AI providers
 
@@ -102,8 +108,9 @@ Set any combination; only configured keys are used.
 2. Import the repo on [Vercel](https://vercel.com/new) → Framework Preset **Next.js**.
 3. Add env vars: `DATABASE_URL` (Neon), `BETTER_AUTH_SECRET` (≥ 32 chars). For a custom domain set `BETTER_AUTH_URL` / `NEXT_PUBLIC_APP_URL` to that `https://…` origin; otherwise Vercel’s `VERCEL_URL` is enough for the default `*.vercel.app` URL.
 4. Optional: add one or more of `GROQ_API_KEY`, `GOOGLE_GENERATIVE_AI_API_KEY`, `OPENROUTER_API_KEY` (and model overrides if needed).
-5. Build command is already `prisma generate && next build` via `npm run build`.
-6. Once against production Postgres, run `npx prisma db push` from a trusted machine. Prefer registering accounts in the UI; do **not** set `DEMO_SEED=1` against production.
+5. For durable attachments, create a [Vercel Blob](https://vercel.com/docs/storage/vercel-blob) store and set `BLOB_READ_WRITE_TOKEN` (plus `BLOB_ACCESS` if the store is private). Without it, uploads land on ephemeral local disk.
+6. Build command is already `prisma generate && next build` via `npm run build`.
+7. Once against production Postgres, run `npx prisma db push` from a trusted machine. Prefer registering accounts in the UI; do **not** set `DEMO_SEED=1` against production.
 
 ## Core model
 

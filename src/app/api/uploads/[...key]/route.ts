@@ -1,8 +1,7 @@
-import { readFile } from "fs/promises";
 import { NextResponse } from "next/server";
 import { requireOrgContext } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
-import { uploadAbsolutePath } from "@/lib/uploads";
+import { readUploadFile } from "@/lib/uploads";
 
 function contentDisposition(fileName: string): string {
   const cleaned = fileName.replace(/[\r\n"'\\]/g, "_").slice(0, 150) || "download";
@@ -42,7 +41,7 @@ export async function GET(
   }
 
   try {
-    const buf = await readFile(uploadAbsolutePath(storageKey));
+    const buf = await readUploadFile(storageKey);
     return new NextResponse(new Uint8Array(buf), {
       headers: {
         // Always download: never render user-supplied HTML/SVG on the app origin.

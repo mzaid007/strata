@@ -67,6 +67,43 @@ select {
   color: var(--moss);
 }
 
+.workspace-switcher {
+  margin: 0 0 1.25rem;
+}
+
+.workspace-switcher select {
+  width: 100%;
+  padding: 0.5rem 0.65rem;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: color-mix(in srgb, white 70%, transparent);
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.85rem;
+}
+
+.workspace-switcher-single {
+  margin: 0 0 1.25rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--ink-soft);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 .nav {
   display: flex;
   flex-direction: column;

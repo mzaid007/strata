@@ -1,10 +1,11 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { OrgRole, RuleTrigger } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { requireUser, requireOrgContext } from "@/lib/session";
+import { ACTIVE_ORG_COOKIE, requireUser, requireOrgContext } from "@/lib/session";
 import { runProjectRules } from "@/lib/rules";
 import {
   actionFail,
@@ -36,6 +37,17 @@ const LIMITS = {
   email: 320,
 } as const;
 
+async function setActiveOrgCookie(organizationId: string) {
+  const jar = await cookies();
+  jar.set(ACTIVE_ORG_COOKIE, organizationId, {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    path: "/",
+    maxAge: 60 * 60 * 24 * 365,
+  });
+}
+
 async function taskInOrg(taskId: string, orgId: string) {
   return prisma.task.findFirst({
     where: { id: taskId, organizationId: orgId },
@@ -53,6 +65,24 @@ async function sectionInOrg(sectionId: string, orgId: string) {
     where: { id: sectionId, project: { organizationId: orgId } },
     include: { project: true },
   });
+}
+
+export async function switchWorkspace(organizationId: string): Promise<ActionState> {
+  const session = await requireUser();
+  if (!organizationId) return actionFail("Choose a workspace.");
+
+  const membership = await prisma.orgMembership.findUnique({
+    where: {
+      organizationId_userId: { organizationId, userId: session.user.id },
+    },
+  });
+  if (!membership) {
+    return actionFail("You are not a member of that workspace.");
+  }
+
+  await setActiveOrgCookie(organizationId);
+  revalidatePath("/", "layout");
+  return actionOk();
 }
 
 export async function createWorkspace(
@@ -76,7 +106,7 @@ export async function createWorkspace(
     slug = `${slug}-${Math.random().toString(36).slice(2, 6)}`;
   }
 
-  await prisma.organization.create({
+  const created = await prisma.organization.create({
     data: {
       name,
       slug,
@@ -99,6 +129,7 @@ export async function createWorkspace(
     },
   });
 
+  await setActiveOrgCookie(created.id);
   revalidatePath("/");
   redirect("/home");
 }
