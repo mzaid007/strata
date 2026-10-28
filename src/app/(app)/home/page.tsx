@@ -38,32 +38,32 @@ export default async function HomePage() {
         {unread ? ` · ${unread} unread in Inbox` : " · Inbox clear"}.
       </p>
 
-      <section className="card-list">
-        <div className="card row" style={{ justifyContent: "space-between" }}>
-          <div>
-            <strong>Jump in</strong>
-            <p className="muted" style={{ margin: "0.35rem 0 0" }}>
-              Tasks, calendar, goals, or a project board.
-            </p>
-          </div>
-          <div className="row">
-            <Link className="btn" href="/my-tasks">
-              My Tasks
-            </Link>
-            <Link className="btn btn-ghost" href="/calendar">
-              Calendar
-            </Link>
-            <Link className="btn btn-ghost" href="/inbox">
-              Inbox{unread ? ` (${unread})` : ""}
-            </Link>
-          </div>
+      <div className="jump-panel">
+        <div>
+          <strong>Jump in</strong>
+          <p className="muted" style={{ margin: "0.25rem 0 0" }}>
+            Tasks, calendar, goals, or a project board.
+          </p>
         </div>
+        <div className="row">
+          <Link className="btn" href="/my-tasks">
+            My Tasks
+          </Link>
+          <Link className="btn btn-ghost" href="/calendar">
+            Calendar
+          </Link>
+          <Link className="btn btn-ghost" href="/inbox">
+            Inbox{unread ? ` (${unread})` : ""}
+          </Link>
+        </div>
+      </div>
 
+      <section className="card-list">
         {goals.length > 0 ? (
           <>
-            <h2 style={{ fontFamily: "var(--font-display)", margin: "0.5rem 0 0" }}>Goals</h2>
+            <h2 className="section-title">Goals</h2>
             {goals.map((g) => (
-              <Link key={g.id} href="/goals" className="card">
+              <Link key={g.id} href="/goals" className="list-row">
                 <div className="row" style={{ justifyContent: "space-between" }}>
                   <strong>{g.title}</strong>
                   <span className="badge">{g.progress}%</span>
@@ -73,14 +73,14 @@ export default async function HomePage() {
           </>
         ) : null}
 
-        <h2 style={{ fontFamily: "var(--font-display)", margin: "0.5rem 0 0" }}>Projects</h2>
+        <h2 className="section-title">Projects</h2>
         {projects.length === 0 ? (
           <p className="muted">
             No projects yet. <Link href="/projects">Create one</Link>.
           </p>
         ) : (
           projects.map((p) => (
-            <Link key={p.id} href={`/projects/${p.id}`} className="card">
+            <Link key={p.id} href={`/projects/${p.id}`} className="list-row">
               <div className="row" style={{ justifyContent: "space-between" }}>
                 <strong>{p.name}</strong>
                 <span className="badge" style={{ background: `${p.color}22`, color: p.color }}>
@@ -91,7 +91,7 @@ export default async function HomePage() {
             </Link>
           ))
         )}
-        <div className="row">
+        <div className="row" style={{ marginTop: "0.75rem" }}>
           <Link className="btn btn-ghost" href="/projects">
             All projects
           </Link>

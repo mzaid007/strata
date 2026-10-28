@@ -52,7 +52,7 @@ export default async function InboxPage() {
               opacity: n.readAt ? 0.72 : 1,
               borderLeft: n.readAt
                 ? "3px solid transparent"
-                : "3px solid var(--moss)",
+                : "3px solid var(--accent)",
             }}
           >
             <div className="row" style={{ justifyContent: "space-between" }}>

@@ -43,7 +43,10 @@ function RegisterForm() {
   return (
     <div className="auth-shell">
       <div className="auth-card">
-        <h1 className="page-title" style={{ fontSize: "2rem" }}>
+        <p className="brand brand-hero" style={{ fontSize: "2.2rem" }}>
+          Strata<span>.</span>
+        </p>
+        <h1 className="page-title" style={{ fontSize: "1.55rem" }}>
           Create account
         </h1>
         <p className="page-sub">

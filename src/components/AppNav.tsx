@@ -41,12 +41,15 @@ export function AppNav({
 
   return (
     <aside className="sidebar">
-      <p className="brand">
-        Strata<span>.</span>
-      </p>
+      <div className="sidebar-brand">
+        <p className="brand">
+          Strata<span>.</span>
+        </p>
+        <span className="sidebar-brand-tag">Work</span>
+      </div>
       <WorkspaceSwitcher workspaces={workspaces} activeOrgId={activeOrgId} />
       <GlobalSearch />
-      <nav className="nav">
+      <nav className="nav" aria-label="Primary">
         {links.map((l) => (
           <Link
             key={l.href}
@@ -59,8 +62,8 @@ export function AppNav({
           </Link>
         ))}
       </nav>
-      <div style={{ marginTop: "auto", paddingTop: "2rem" }}>
-        <p className="muted" style={{ marginBottom: "0.6rem" }}>
+      <div className="sidebar-foot">
+        <p className="muted" style={{ marginBottom: "0.55rem" }}>
           {userName}
         </p>
         <button type="button" className="btn btn-ghost" onClick={signOut}>

@@ -51,9 +51,9 @@ export function LoginForm() {
   return (
     <div className="auth-shell">
       <div className="auth-card">
-        <h1 className="page-title" style={{ fontSize: "2rem" }}>
-          Strata
-        </h1>
+        <p className="brand brand-hero">
+          Strata<span>.</span>
+        </p>
         <p className="page-sub">
           {inviteToken ? "Sign in to accept your workspace invite." : "Sign in to your workspace."}
         </p>

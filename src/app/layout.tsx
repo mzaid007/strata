@@ -1,15 +1,15 @@
 import type { Metadata } from "next";
-import { Figtree, Fraunces } from "next/font/google";
+import { Newsreader, Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 
-const figtree = Figtree({
+const plusJakarta = Plus_Jakarta_Sans({
   subsets: ["latin"],
-  variable: "--font-figtree",
+  variable: "--font-plus-jakarta",
 });
 
-const fraunces = Fraunces({
+const newsreader = Newsreader({
   subsets: ["latin"],
-  variable: "--font-fraunces",
+  variable: "--font-newsreader",
 });
 
 export const metadata: Metadata = {
@@ -19,12 +19,12 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${figtree.variable} ${fraunces.variable}`}>
+    <html lang="en" className={`${plusJakarta.variable} ${newsreader.variable}`}>
       <body
         style={
           {
-            "--font-body": "var(--font-figtree), Segoe UI, sans-serif",
-            "--font-display": "var(--font-fraunces), Georgia, serif",
+            "--font-body": "var(--font-plus-jakarta), Segoe UI, sans-serif",
+            "--font-display": "var(--font-newsreader), Georgia, serif",
           } as React.CSSProperties
         }
       >

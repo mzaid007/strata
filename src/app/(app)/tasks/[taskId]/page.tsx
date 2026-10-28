@@ -128,7 +128,7 @@ export default async function TaskDetailPage({
   const depCandidates = candidateTasks.filter((t) => !linkedIds.has(t.id));
 
   return (
-    <>
+    <div className="task-pane">
       <p className="muted">
         {task.parent ? (
           <>
@@ -294,6 +294,6 @@ export default async function TaskDetailPage({
         )}
         <AttachmentUploadForm taskId={task.id} />
       </section>
-    </>
+    </div>
   );
 }

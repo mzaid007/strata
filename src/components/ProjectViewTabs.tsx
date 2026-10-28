@@ -17,13 +17,16 @@ export function ProjectViewTabs({
   active: (typeof tabs)[number]["label"];
 }) {
   return (
-    <div className="view-tabs">
+    <div className="view-tabs" role="tablist" aria-label="Project views">
       {tabs.map((t) => (
         <Link
           key={t.label}
-          className={t.label === active ? "btn" : "btn btn-ghost"}
+          className="view-tab"
           href={`/projects/${projectId}${t.suffix}`}
           prefetch
+          data-active={t.label === active}
+          role="tab"
+          aria-selected={t.label === active}
         >
           {t.label}
         </Link>

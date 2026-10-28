@@ -22,7 +22,15 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         }
       />
       <main className="main">
-        <Suspense fallback={<PageLoadingFallback />}>{children}</Suspense>
+        <header className="top-chrome">
+          <p className="top-chrome-brand">
+            Strata<span>.</span>
+          </p>
+          <p className="top-chrome-meta">{org.name}</p>
+        </header>
+        <div className="main-inner">
+          <Suspense fallback={<PageLoadingFallback />}>{children}</Suspense>
+        </div>
       </main>
     </div>
   );

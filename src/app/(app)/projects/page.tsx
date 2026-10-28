@@ -21,7 +21,7 @@ export default async function ProjectsPage() {
           <p className="muted">No projects yet — create one above.</p>
         ) : (
           projects.map((p) => (
-            <Link key={p.id} href={`/projects/${p.id}`} className="card">
+            <Link key={p.id} href={`/projects/${p.id}`} className="list-row">
               <strong>{p.name}</strong>
               <p className="muted">
                 {p._count.sections} sections · {p._count.memberships} task placements
