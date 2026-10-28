@@ -1,8 +1,8 @@
-# Run in PowerShell on DESKTOP-1J4BR2Q when the agent shell cannot spawn.
-# Usage:  powershell -ExecutionPolicy Bypass -File f:\Strata\scripts\setup-local.ps1
+# Run in PowerShell when the agent shell cannot spawn.
+# Usage:  powershell -ExecutionPolicy Bypass -File <repo>\scripts\setup-local.ps1
 
 $ErrorActionPreference = "Stop"
-Set-Location f:\Strata
+Set-Location (Split-Path $PSScriptRoot -Parent)
 
 if (-not (Test-Path .env)) {
   Copy-Item .env.example .env

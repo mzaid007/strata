@@ -17,6 +17,9 @@ export default async function WorkloadPage() {
     _count: { _all: true },
   });
 
+  const today = new Date();
+  today.setUTCHours(0, 0, 0, 0);
+
   const dueSoon = await prisma.task.groupBy({
     by: ["assigneeId"],
     where: {
@@ -24,6 +27,7 @@ export default async function WorkloadPage() {
       completedAt: null,
       assigneeId: { not: null },
       dueOn: {
+        gte: today,
         lte: new Date(Date.now() + 7 * 86400000),
       },
     },

@@ -5,6 +5,14 @@ import { FormEvent, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
 
+/** Same-origin path only — `//host` and `/\host` would redirect off-site. */
+function safeNextPath(raw: string | null): string {
+  if (!raw || !raw.startsWith("/")) return "/home";
+  if (raw.startsWith("//") || raw.startsWith("/\\")) return "/home";
+  if (/[\u0000-\u001f\u007f]/.test(raw)) return "/home";
+  return raw;
+}
+
 export function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -24,8 +32,7 @@ export function LoginForm() {
         setError(res.error.message ?? "Could not sign in");
         return;
       }
-      const next = searchParams.get("next");
-      router.push(next && next.startsWith("/") ? next : "/home");
+      router.push(safeNextPath(searchParams.get("next")));
       router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not sign in");

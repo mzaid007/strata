@@ -4,6 +4,9 @@
   "private": false,
   "license": "MIT",
   "author": "mzaid007",
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "prisma generate && next build",

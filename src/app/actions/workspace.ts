@@ -26,6 +26,16 @@ function isAdminRole(role: OrgRole) {
   return role === OrgRole.OWNER || role === OrgRole.ADMIN;
 }
 
+const LIMITS = {
+  workspaceName: 80,
+  projectName: 120,
+  projectDescription: 2000,
+  taskTitle: 200,
+  taskDescription: 20000,
+  commentBody: 20000,
+  email: 320,
+} as const;
+
 async function taskInOrg(taskId: string, orgId: string) {
   return prisma.task.findFirst({
     where: { id: taskId, organizationId: orgId },
@@ -53,6 +63,11 @@ export async function createWorkspace(
   const name = String(formData.get("name") ?? "").trim();
   if (!name) {
     return actionFail("Workspace name is required.", { name: "Required" });
+  }
+  if (name.length > LIMITS.workspaceName) {
+    return actionFail(`Workspace name is too long (max ${LIMITS.workspaceName}).`, {
+      name: "Too long",
+    });
   }
 
   let slug = slugify(name);
@@ -102,6 +117,9 @@ export async function inviteMember(
     .toLowerCase();
   if (!email) {
     return actionFail("Email is required.", { email: "Required" });
+  }
+  if (email.length > LIMITS.email || !email.includes("@")) {
+    return actionFail("Enter a valid email address.", { email: "Invalid" });
   }
 
   const user = await prisma.user.findUnique({ where: { email } });
@@ -156,6 +174,14 @@ export async function createProject(
   if (!name) {
     return actionFail("Project name is required.", { name: "Required" });
   }
+  if (name.length > LIMITS.projectName) {
+    return actionFail(`Project name is too long (max ${LIMITS.projectName}).`, {
+      name: "Too long",
+    });
+  }
+  if (description.length > LIMITS.projectDescription) {
+    return actionFail("Project description is too long.", { description: "Too long" });
+  }
 
   const project = await prisma.project.create({
     data: {
@@ -188,6 +214,11 @@ export async function createTask(
 
   if (!title) {
     return actionFail("Task title is required.", { title: "Required" });
+  }
+  if (title.length > LIMITS.taskTitle) {
+    return actionFail(`Task title is too long (max ${LIMITS.taskTitle}).`, {
+      title: "Too long",
+    });
   }
   if (!projectId || !sectionId) {
     return actionFail("Choose a section for the new task.");
@@ -255,6 +286,12 @@ export async function updateTask(
   if (!taskId) return actionFail("Missing task.");
   if (!title) {
     return actionFail("Title is required.", { title: "Required" });
+  }
+  if (title.length > LIMITS.taskTitle) {
+    return actionFail(`Title is too long (max ${LIMITS.taskTitle}).`, { title: "Too long" });
+  }
+  if (description.length > LIMITS.taskDescription) {
+    return actionFail("Description is too long.", { description: "Too long" });
   }
 
   const task = await taskInOrg(taskId, org.id);
@@ -356,6 +393,9 @@ export async function addComment(
   if (!body) {
     return actionFail("Comment cannot be empty.", { body: "Required" });
   }
+  if (body.length > LIMITS.commentBody) {
+    return actionFail("Comment is too long.", { body: "Too long" });
+  }
 
   const task = await taskInOrg(taskId, org.id);
   if (!task) return actionFail("Task not found in this workspace.");
@@ -364,15 +404,22 @@ export async function addComment(
     data: { taskId, authorId: session.user.id, body },
   });
 
+  const notifyIds = new Set<string>();
   if (task.assigneeId && task.assigneeId !== session.user.id) {
-    await prisma.notification.create({
-      data: {
-        userId: task.assigneeId,
+    notifyIds.add(task.assigneeId);
+  }
+  if (task.creatorId && task.creatorId !== session.user.id) {
+    notifyIds.add(task.creatorId);
+  }
+  if (notifyIds.size > 0) {
+    await prisma.notification.createMany({
+      data: [...notifyIds].map((userId) => ({
+        userId,
         kind: "COMMENT",
         title: `${session.user.name} commented`,
         body: task.title,
         href: `/tasks/${taskId}`,
-      },
+      })),
     });
   }
 
@@ -551,8 +598,8 @@ export async function moveTaskMembership(input: {
   if (!membership) return actionFail("Task is not in this project.");
 
   let position: number;
-  if (typeof input.beforePosition === "number") {
-    position = input.beforePosition - 0.001;
+  if (typeof input.beforePosition === "number" && Number.isFinite(input.beforePosition)) {
+    position = Math.max(0, input.beforePosition - 0.001);
   } else {
     const max = await prisma.taskMembership.aggregate({
       where: { sectionId },

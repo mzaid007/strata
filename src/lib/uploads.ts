@@ -2,11 +2,14 @@ import { mkdir, writeFile } from "fs/promises";
 import path from "path";
 import { randomBytes } from "crypto";
 
-const UPLOAD_ROOT = path.join(process.cwd(), "uploads");
+const UPLOAD_ROOT = path.resolve(process.cwd(), "uploads");
 
 export function uploadAbsolutePath(storageKey: string) {
-  const safe = storageKey.replace(/\\/g, "/").replace(/\.\./g, "");
-  return path.join(UPLOAD_ROOT, safe);
+  const abs = path.resolve(UPLOAD_ROOT, storageKey.replace(/\\/g, "/"));
+  if (abs !== UPLOAD_ROOT && !abs.startsWith(`${UPLOAD_ROOT}${path.sep}`)) {
+    throw new Error("Invalid storage key");
+  }
+  return abs;
 }
 
 export async function saveUploadFile(file: File): Promise<{
@@ -23,7 +26,7 @@ export async function saveUploadFile(file: File): Promise<{
   await writeFile(abs, bytes);
   return {
     storageKey,
-    fileName: file.name.slice(0, 200) || "file",
+    fileName: file.name.replace(/[\r\n]/g, " ").slice(0, 200) || "file",
     mimeType: file.type || "application/octet-stream",
     sizeBytes: bytes.length,
   };

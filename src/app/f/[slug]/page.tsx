@@ -16,31 +16,45 @@ export default async function PublicFormPage({
   }
 
   const form = await prisma.projectForm.findFirst({
-    where: { slug, isOpen: true },
+    where: {
+      slug,
+      organization: { memberships: { some: { userId: session.user.id } } },
+    },
     include: {
       fields: { orderBy: { position: "asc" } },
       project: { select: { name: true } },
       organization: { select: { name: true } },
     },
   });
-  if (!form) notFound();
 
-  const membership = await prisma.orgMembership.findUnique({
-    where: {
-      organizationId_userId: {
-        organizationId: form.organizationId,
-        userId: session.user.id,
-      },
-    },
-  });
-  if (!membership) {
+  if (!form) {
+    // Slug is only unique per workspace; don't let another org's form shadow access.
+    const exists = await prisma.projectForm.findFirst({
+      where: { slug },
+      select: { organization: { select: { name: true } } },
+    });
+    if (!exists) notFound();
     return (
       <div className="auth-shell">
         <div className="auth-card">
           <h1 className="page-title">No access</h1>
           <p className="page-sub">
-            You need to be a member of {form.organization.name} to submit this form.
+            You need to be a member of {exists.organization.name} to submit this form.
           </p>
+          <Link className="btn" href="/home">
+            Go home
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  if (!form.isOpen) {
+    return (
+      <div className="auth-shell">
+        <div className="auth-card">
+          <h1 className="page-title">Form closed</h1>
+          <p className="page-sub">This form is no longer accepting submissions.</p>
           <Link className="btn" href="/home">
             Go home
           </Link>

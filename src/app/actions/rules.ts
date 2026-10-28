@@ -24,6 +24,7 @@ export async function createAutomationRule(
 
   if (!projectId) return actionFail("Missing project.");
   if (!name) return actionFail("Rule name is required.", { name: "Required" });
+  if (name.length > 120) return actionFail("Rule name is too long.", { name: "Too long" });
   if (!triggers.has(trigger)) return actionFail("Pick a trigger.");
   if (!actions.has(action)) return actionFail("Pick an action.");
 
@@ -43,6 +44,7 @@ export async function createAutomationRule(
   }
   if (action === RuleAction.ADD_COMMENT) {
     if (!commentBody) return actionFail("Comment body is required.");
+    if (commentBody.length > 2000) return actionFail("Comment body is too long.");
     actionConfig.commentBody = commentBody;
   }
   if (action === RuleAction.SET_ASSIGNEE) {

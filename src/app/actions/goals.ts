@@ -18,6 +18,10 @@ export async function createGoal(
   const targetRaw = String(formData.get("targetDate") ?? "").trim();
 
   if (!title) return actionFail("Goal title is required.", { title: "Required" });
+  if (title.length > 200) return actionFail("Goal title is too long.", { title: "Too long" });
+  if (description.length > 5000) {
+    return actionFail("Goal description is too long.", { description: "Too long" });
+  }
 
   let targetDate: Date | null = null;
   if (targetRaw) {

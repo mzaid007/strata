@@ -46,6 +46,13 @@ export async function runTaskAi(
     if (!text) return actionFail("Model returned an empty response.");
     return { ok: true, message: text };
   } catch (e) {
-    return actionFail(e instanceof Error ? e.message : "AI request failed.");
+    console.error("AI assist failed", e);
+    return actionFail(
+      process.env.NODE_ENV === "production"
+        ? "AI request failed. Try again later."
+        : e instanceof Error
+          ? e.message
+          : "AI request failed.",
+    );
   }
 }

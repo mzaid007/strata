@@ -28,6 +28,10 @@ export async function createProjectForm(
 
   if (!projectId) return actionFail("Missing project.");
   if (!title) return actionFail("Form title is required.", { title: "Required" });
+  if (title.length > 120) return actionFail("Form title is too long.", { title: "Too long" });
+  if (description.length > 2000) {
+    return actionFail("Form description is too long.", { description: "Too long" });
+  }
 
   const project = await prisma.project.findFirst({
     where: { id: projectId, organizationId: org.id },
@@ -110,6 +114,11 @@ export async function submitProjectForm(
     if (field.required && !value) {
       return actionFail(`“${field.label}” is required.`, {
         [`field_${field.id}`]: "Required",
+      });
+    }
+    if (value.length > 10000) {
+      return actionFail(`“${field.label}” is too long.`, {
+        [`field_${field.id}`]: "Too long",
       });
     }
     payload[field.label] = value;

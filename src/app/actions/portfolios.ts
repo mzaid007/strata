@@ -14,6 +14,10 @@ export async function createPortfolio(
   const name = String(formData.get("name") ?? "").trim();
   const description = String(formData.get("description") ?? "").trim();
   if (!name) return actionFail("Portfolio name is required.", { name: "Required" });
+  if (name.length > 120) return actionFail("Portfolio name is too long.", { name: "Too long" });
+  if (description.length > 2000) {
+    return actionFail("Portfolio description is too long.", { description: "Too long" });
+  }
 
   const portfolio = await prisma.portfolio.create({
     data: {
