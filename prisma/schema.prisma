@@ -28,6 +28,8 @@ model User {
   notifications    Notification[]
   uploadedFiles    Attachment[]
   ownedGoals       Goal[]           @relation("GoalOwner")
+  taskFollows      TaskFollower[]
+  invitesSent      OrgInvite[]      @relation("InviteSender")
 }
 
 model Session {
@@ -89,6 +91,8 @@ model Organization {
   portfolios  Portfolio[]
   forms       ProjectForm[]
   rules       AutomationRule[]
+  invites     OrgInvite[]
+  dependencies TaskDependency[]
 }
 
 enum OrgRole {
@@ -109,6 +113,25 @@ model OrgMembership {
 
   @@unique([organizationId, userId])
   @@index([userId])
+}
+
+/// Pending email invite with shareable accept link (no SSO).
+model OrgInvite {
+  id             String    @id @default(cuid())
+  organizationId String
+  email          String
+  token          String    @unique
+  role           OrgRole   @default(MEMBER)
+  invitedById    String
+  acceptedAt     DateTime?
+  expiresAt      DateTime
+  createdAt      DateTime  @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  invitedBy    User         @relation("InviteSender", fields: [invitedById], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, email])
+  @@index([token])
 }
 
 model Team {
@@ -181,10 +204,46 @@ model Task {
   memberships  TaskMembership[]
   comments     Comment[]
   attachments  Attachment[]
+  followers    TaskFollower[]
+  blocking     TaskDependency[]  @relation("TaskBlocks")
+  blockedBy    TaskDependency[]  @relation("TaskBlockedBy")
 
   @@index([organizationId])
   @@index([assigneeId])
   @@index([dueOn])
+  @@index([parentTaskId])
+  @@index([organizationId, title])
+}
+
+model TaskFollower {
+  id        String   @id @default(cuid())
+  taskId    String
+  userId    String
+  createdAt DateTime @default(now())
+
+  task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([taskId, userId])
+  @@index([userId])
+}
+
+/// blockerId must finish before blockedId can proceed.
+model TaskDependency {
+  id             String   @id @default(cuid())
+  organizationId String
+  blockerId      String
+  blockedId      String
+  createdAt      DateTime @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  blocker      Task         @relation("TaskBlocks", fields: [blockerId], references: [id], onDelete: Cascade)
+  blocked      Task         @relation("TaskBlockedBy", fields: [blockedId], references: [id], onDelete: Cascade)
+
+  @@unique([blockerId, blockedId])
+  @@index([blockedId])
+  @@index([blockerId])
+  @@index([organizationId])
 }
 
 model TaskMembership {
@@ -391,6 +450,8 @@ model AutomationRule {
   action         RuleAction
   /// JSON: { sectionId?, commentBody?, assigneeId? }
   actionConfig   String      @default("{}")
+  /// JSON: { titleContains?, hasAssignee?, assigneeId?, onlyIfIncomplete? }
+  conditionConfig String     @default("{}")
   createdAt      DateTime    @default(now())
   updatedAt      DateTime    @updatedAt
 

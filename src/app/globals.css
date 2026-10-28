@@ -460,6 +460,147 @@ select {
   white-space: nowrap;
 }
 
+.timeline-row-blocked {
+  background: color-mix(in srgb, var(--copper) 6%, transparent);
+}
+
+.timeline-bar-blocked {
+  background: color-mix(in srgb, var(--copper) 75%, var(--moss));
+}
+
+.search-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  margin: 0 0 1rem;
+  padding: 0.45rem 0.65rem;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: color-mix(in srgb, white 70%, transparent);
+  color: var(--ink-soft);
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+
+.search-trigger kbd {
+  font-size: 0.7rem;
+  padding: 0.1rem 0.35rem;
+  border-radius: 6px;
+  border: 1px solid var(--line);
+  background: color-mix(in srgb, white 80%, transparent);
+}
+
+.search-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: grid;
+  place-items: start center;
+  padding: 12vh 1rem 1rem;
+}
+
+.search-backdrop {
+  position: absolute;
+  inset: 0;
+  border: 0;
+  background: color-mix(in srgb, var(--ink) 35%, transparent);
+  cursor: pointer;
+}
+
+.search-panel {
+  position: relative;
+  width: min(560px, 100%);
+  border-radius: var(--radius);
+  border: 1px solid var(--line);
+  background: var(--paper);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+
+.search-input {
+  width: 100%;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  padding: 0.9rem 1rem;
+  background: transparent;
+  outline: none;
+  font-size: 1.05rem;
+}
+
+.search-results {
+  max-height: 360px;
+  overflow: auto;
+  padding: 0.75rem 1rem 1rem;
+}
+
+.search-group {
+  margin-bottom: 0.75rem;
+}
+
+.search-group-label {
+  margin: 0 0 0.35rem;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--ink-soft);
+}
+
+.search-hit {
+  display: block;
+  padding: 0.45rem 0.35rem;
+  border-radius: 8px;
+}
+
+.search-hit:hover {
+  background: color-mix(in srgb, var(--moss) 10%, white);
+}
+
+.subtask-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.subtask-list li {
+  padding: 0.35rem 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.rule-conditions {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 0.75rem 0.9rem;
+  margin: 0 0 0.85rem;
+}
+
+.rule-conditions legend {
+  padding: 0 0.35rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.badge-warn {
+  background: color-mix(in srgb, var(--copper) 18%, white);
+  color: color-mix(in srgb, var(--copper) 70%, var(--ink));
+}
+
+.badge-load-high {
+  background: color-mix(in srgb, var(--copper) 20%, white);
+}
+
+.badge-load-mid {
+  background: color-mix(in srgb, var(--moss) 14%, white);
+}
+
+.workload-bar-fill-high {
+  background: var(--copper);
+}
+
+.workload-bar-fill-mid {
+  background: color-mix(in srgb, var(--copper) 40%, var(--moss));
+}
+
 .workload-grid {
   display: grid;
   gap: 0.75rem;

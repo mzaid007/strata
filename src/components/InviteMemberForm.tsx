@@ -1,12 +1,12 @@
 "use client";
 
 import { useActionState } from "react";
-import { inviteMember } from "@/app/actions/workspace";
+import { createOrgInvite } from "@/app/actions/invites";
 import { initialActionState } from "@/lib/action-result";
 import { FormBanner } from "@/components/FormBanner";
 
 export function InviteMemberForm() {
-  const [state, action, pending] = useActionState(inviteMember, initialActionState);
+  const [state, action, pending] = useActionState(createOrgInvite, initialActionState);
 
   return (
     <form action={action}>
@@ -25,8 +25,11 @@ export function InviteMemberForm() {
           <p className="field-error">{state.fieldErrors.email}</p>
         ) : null}
       </div>
+      <p className="muted" style={{ marginTop: 0 }}>
+        Registered users are added immediately. Others get a shareable invite link (14 days).
+      </p>
       <button className="btn" type="submit" disabled={pending}>
-        {pending ? "Adding…" : "Add to workspace"}
+        {pending ? "Creating…" : "Create invite"}
       </button>
     </form>
   );

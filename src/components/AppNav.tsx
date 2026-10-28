@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import type { ReactNode } from "react";
 import { authClient } from "@/lib/auth-client";
+import { GlobalSearch } from "@/components/GlobalSearch";
 import { WorkspaceSwitcher } from "@/components/WorkspaceSwitcher";
 
 const links = [
@@ -44,6 +45,7 @@ export function AppNav({
         Strata<span>.</span>
       </p>
       <WorkspaceSwitcher workspaces={workspaces} activeOrgId={activeOrgId} />
+      <GlobalSearch />
       <nav className="nav">
         {links.map((l) => (
           <Link

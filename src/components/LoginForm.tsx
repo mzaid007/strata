@@ -32,7 +32,12 @@ export function LoginForm() {
         setError(res.error.message ?? "Could not sign in");
         return;
       }
-      router.push(safeNextPath(searchParams.get("next")));
+      const invite = searchParams.get("invite");
+      if (invite && /^[a-f0-9]{20,}$/i.test(invite)) {
+        router.push(`/invite/${invite}`);
+      } else {
+        router.push(safeNextPath(searchParams.get("next")));
+      }
       router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not sign in");
@@ -41,13 +46,17 @@ export function LoginForm() {
     }
   }
 
+  const inviteToken = searchParams.get("invite");
+
   return (
     <div className="auth-shell">
       <div className="auth-card">
         <h1 className="page-title" style={{ fontSize: "2rem" }}>
           Strata
         </h1>
-        <p className="page-sub">Sign in to your workspace.</p>
+        <p className="page-sub">
+          {inviteToken ? "Sign in to accept your workspace invite." : "Sign in to your workspace."}
+        </p>
         {error ? <div className="error">{error}</div> : null}
         <form onSubmit={onSubmit}>
           <div className="field">

@@ -31,6 +31,36 @@ export function CreateRuleForm({
           <option value="TASK_ASSIGNED">Task assigned</option>
         </select>
       </div>
+      <fieldset className="rule-conditions">
+        <legend>Only if (optional)</legend>
+        <div className="field">
+          <label htmlFor="titleContains">Title contains</label>
+          <input id="titleContains" name="titleContains" placeholder="e.g. bug" />
+        </div>
+        <div className="field">
+          <label htmlFor="hasAssignee">Has assignee</label>
+          <select id="hasAssignee" name="hasAssignee" defaultValue="">
+            <option value="">Any</option>
+            <option value="yes">Assigned</option>
+            <option value="no">Unassigned</option>
+          </select>
+        </div>
+        <div className="field">
+          <label htmlFor="conditionAssigneeId">Assignee is</label>
+          <select id="conditionAssigneeId" name="conditionAssigneeId" defaultValue="">
+            <option value="">Any</option>
+            {members.map((m) => (
+              <option key={m.id} value={m.id}>
+                {m.name}
+              </option>
+            ))}
+          </select>
+        </div>
+        <label className="row" style={{ gap: "0.45rem" }}>
+          <input type="checkbox" name="onlyIfIncomplete" />
+          Only if task is still incomplete
+        </label>
+      </fieldset>
       <div className="field">
         <label htmlFor="action">Then</label>
         <select id="action" name="action" defaultValue="MOVE_TO_SECTION">

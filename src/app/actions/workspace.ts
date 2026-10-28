@@ -23,10 +23,6 @@ function slugify(input: string) {
   );
 }
 
-function isAdminRole(role: OrgRole) {
-  return role === OrgRole.OWNER || role === OrgRole.ADMIN;
-}
-
 const LIMITS = {
   workspaceName: 80,
   projectName: 120,
@@ -132,67 +128,6 @@ export async function createWorkspace(
   await setActiveOrgCookie(created.id);
   revalidatePath("/");
   redirect("/home");
-}
-
-export async function inviteMember(
-  _prev: ActionState,
-  formData: FormData,
-): Promise<ActionState> {
-  const { membership, org } = await requireOrgContext();
-  if (!isAdminRole(membership.role)) {
-    return actionFail("Only owners and admins can invite members.");
-  }
-
-  const email = String(formData.get("email") ?? "")
-    .trim()
-    .toLowerCase();
-  if (!email) {
-    return actionFail("Email is required.", { email: "Required" });
-  }
-  if (email.length > LIMITS.email || !email.includes("@")) {
-    return actionFail("Enter a valid email address.", { email: "Invalid" });
-  }
-
-  const user = await prisma.user.findUnique({ where: { email } });
-  if (!user) {
-    return actionFail(
-      "No account with that email. Ask them to register first, then add them here.",
-      { email: "Not registered" },
-    );
-  }
-
-  const existing = await prisma.orgMembership.findUnique({
-    where: {
-      organizationId_userId: { organizationId: org.id, userId: user.id },
-    },
-  });
-  if (existing) {
-    return actionFail("That person is already in this workspace.", {
-      email: "Already a member",
-    });
-  }
-
-  await prisma.orgMembership.create({
-    data: {
-      organizationId: org.id,
-      userId: user.id,
-      role: OrgRole.MEMBER,
-    },
-  });
-
-  await prisma.notification.create({
-    data: {
-      userId: user.id,
-      kind: "SYSTEM",
-      title: `Added to ${org.name}`,
-      body: "You can open projects and tasks in this workspace.",
-      href: "/home",
-    },
-  });
-
-  revalidatePath("/admin");
-  revalidatePath("/inbox");
-  return actionOk(`${user.name} added to the workspace.`);
 }
 
 export async function createProject(
@@ -435,6 +370,33 @@ export async function addComment(
     data: { taskId, authorId: session.user.id, body },
   });
 
+  const members = await prisma.orgMembership.findMany({
+    where: { organizationId: org.id },
+    select: { user: { select: { id: true, name: true } } },
+  });
+  const { resolveMentionedUserIds } = await import("@/lib/mentions");
+  const mentioned = resolveMentionedUserIds(
+    body,
+    members.map((m) => ({ id: m.user.id, name: m.user.name })),
+  ).filter((id) => id !== session.user.id);
+
+  if (mentioned.length > 0) {
+    await prisma.notification.createMany({
+      data: mentioned.map((userId) => ({
+        userId,
+        kind: "MENTION" as const,
+        title: `${session.user.name} mentioned you`,
+        body: task.title,
+        href: `/tasks/${taskId}`,
+      })),
+    });
+  }
+
+  const followers = await prisma.taskFollower.findMany({
+    where: { taskId },
+    select: { userId: true },
+  });
+
   const notifyIds = new Set<string>();
   if (task.assigneeId && task.assigneeId !== session.user.id) {
     notifyIds.add(task.assigneeId);
@@ -442,11 +404,16 @@ export async function addComment(
   if (task.creatorId && task.creatorId !== session.user.id) {
     notifyIds.add(task.creatorId);
   }
+  for (const f of followers) {
+    if (f.userId !== session.user.id) notifyIds.add(f.userId);
+  }
+  for (const id of mentioned) notifyIds.delete(id);
+
   if (notifyIds.size > 0) {
     await prisma.notification.createMany({
       data: [...notifyIds].map((userId) => ({
         userId,
-        kind: "COMMENT",
+        kind: "COMMENT" as const,
         title: `${session.user.name} commented`,
         body: task.title,
         href: `/tasks/${taskId}`,

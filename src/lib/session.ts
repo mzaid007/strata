@@ -19,6 +19,12 @@ export async function requireUser() {
   return session;
 }
 
+/** Soft session read for public invite/login pages (no redirect). */
+export async function getSessionUser() {
+  const session = await getSession();
+  return session?.user ?? null;
+}
+
 /** Request-scoped membership lookup. */
 export const getMemberships = cache(async (userId: string) => {
   return prisma.orgMembership.findMany({

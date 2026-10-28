@@ -6,8 +6,11 @@ import { aiConfigured } from "@/lib/ai";
 import { toggleTaskComplete } from "@/app/actions/workspace";
 import { AddCommentForm } from "@/components/AddCommentForm";
 import { AttachmentUploadForm } from "@/components/AttachmentUploadForm";
+import { DependenciesPanel } from "@/components/DependenciesPanel";
+import { FollowersPanel } from "@/components/FollowersPanel";
 import { MultiHomeForm } from "@/components/MultiHomeForm";
 import { MoveToSectionForm } from "@/components/MoveToSectionForm";
+import { SubtasksPanel } from "@/components/SubtasksPanel";
 import { TaskAiPanel } from "@/components/TaskAiPanel";
 import { UpdateTaskForm } from "@/components/UpdateTaskForm";
 
@@ -17,7 +20,7 @@ export default async function TaskDetailPage({
   params: Promise<{ taskId: string }>;
 }) {
   const { taskId } = await params;
-  const { org } = await requireOrgContext();
+  const { session, org } = await requireOrgContext();
 
   const task = await prisma.task.findFirst({
     where: { id: taskId, organizationId: org.id },
@@ -29,6 +32,8 @@ export default async function TaskDetailPage({
       startOn: true,
       dueOn: true,
       assigneeId: true,
+      parentTaskId: true,
+      parent: { select: { id: true, title: true } },
       assignee: { select: { name: true } },
       comments: {
         select: {
@@ -58,11 +63,31 @@ export default async function TaskDetailPage({
         },
         orderBy: { createdAt: "desc" },
       },
+      subtasks: {
+        select: { id: true, title: true, completedAt: true },
+        orderBy: { createdAt: "asc" },
+      },
+      followers: {
+        select: { userId: true, user: { select: { name: true } } },
+        orderBy: { createdAt: "asc" },
+      },
+      blockedBy: {
+        select: {
+          id: true,
+          blocker: { select: { id: true, title: true, completedAt: true } },
+        },
+      },
+      blocking: {
+        select: {
+          id: true,
+          blocked: { select: { id: true, title: true, completedAt: true } },
+        },
+      },
     },
   });
   if (!task) notFound();
 
-  const [projects, members] = await Promise.all([
+  const [projects, members, candidateTasks] = await Promise.all([
     prisma.project.findMany({
       where: { organizationId: org.id },
       select: {
@@ -77,6 +102,16 @@ export default async function TaskDetailPage({
       select: { user: { select: { id: true, name: true } } },
       orderBy: { createdAt: "asc" },
     }),
+    prisma.task.findMany({
+      where: {
+        organizationId: org.id,
+        id: { not: task.id },
+        parentTaskId: null,
+      },
+      select: { id: true, title: true },
+      orderBy: { updatedAt: "desc" },
+      take: 80,
+    }),
   ]);
 
   const placements = projects.flatMap((p) =>
@@ -86,10 +121,22 @@ export default async function TaskDetailPage({
     })),
   );
 
+  const linkedIds = new Set([
+    ...task.blockedBy.map((d) => d.blocker.id),
+    ...task.blocking.map((d) => d.blocked.id),
+  ]);
+  const depCandidates = candidateTasks.filter((t) => !linkedIds.has(t.id));
+
   return (
     <>
       <p className="muted">
-        <Link href="/my-tasks">← My Tasks</Link>
+        {task.parent ? (
+          <>
+            <Link href={`/tasks/${task.parent.id}`}>← {task.parent.title}</Link>
+            {" · "}
+          </>
+        ) : null}
+        <Link href="/my-tasks">My Tasks</Link>
       </p>
       <h1
         className="page-title"
@@ -103,6 +150,9 @@ export default async function TaskDetailPage({
         <span className="badge">{task.assignee?.name ?? "Unassigned"}</span>
         {task.dueOn ? (
           <span className="muted">Due {task.dueOn.toISOString().slice(0, 10)}</span>
+        ) : null}
+        {task.blockedBy.some((d) => !d.blocker.completedAt) ? (
+          <span className="badge badge-warn">Blocked</span>
         ) : null}
         <form
           action={async () => {
@@ -127,6 +177,52 @@ export default async function TaskDetailPage({
       />
 
       <TaskAiPanel taskId={task.id} configured={aiConfigured()} />
+
+      {!task.parentTaskId ? (
+        <SubtasksPanel
+          parentTaskId={task.id}
+          subtasks={task.subtasks.map((s) => ({
+            id: s.id,
+            title: s.title,
+            completedAt: s.completedAt ? s.completedAt.toISOString() : null,
+          }))}
+        />
+      ) : null}
+
+      <FollowersPanel
+        taskId={task.id}
+        currentUserId={session.user.id}
+        followers={task.followers.map((f) => ({
+          userId: f.userId,
+          name: f.user.name,
+        }))}
+        members={members.map((m) => ({ id: m.user.id, name: m.user.name }))}
+      />
+
+      <DependenciesPanel
+        taskId={task.id}
+        blockedBy={task.blockedBy.map((d) => ({
+          dependencyId: d.id,
+          task: {
+            id: d.blocker.id,
+            title: d.blocker.title,
+            completedAt: d.blocker.completedAt
+              ? d.blocker.completedAt.toISOString()
+              : null,
+          },
+        }))}
+        blocking={task.blocking.map((d) => ({
+          dependencyId: d.id,
+          task: {
+            id: d.blocked.id,
+            title: d.blocked.title,
+            completedAt: d.blocked.completedAt
+              ? d.blocked.completedAt.toISOString()
+              : null,
+          },
+        }))}
+        candidateTasks={depCandidates}
+      />
 
       <section className="card" style={{ marginBottom: "1rem" }}>
         <h2 style={{ marginTop: 0, fontSize: "1rem" }}>Homed in (multi-home)</h2>
@@ -168,13 +264,16 @@ export default async function TaskDetailPage({
             task.comments.map((c) => (
               <div key={c.id}>
                 <strong>{c.author.name}</strong>
-                <p style={{ margin: "0.25rem 0" }}>{c.body}</p>
+                <p style={{ margin: "0.25rem 0", whiteSpace: "pre-wrap" }}>{c.body}</p>
                 <p className="muted">{c.createdAt.toLocaleString()}</p>
               </div>
             ))
           )}
         </div>
-        <AddCommentForm taskId={task.id} />
+        <AddCommentForm
+          taskId={task.id}
+          mentionHints={members.map((m) => m.user.name)}
+        />
       </section>
 
       <section className="card">

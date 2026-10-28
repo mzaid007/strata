@@ -1,12 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { FormEvent, useState } from "react";
-import { useRouter } from "next/navigation";
+import { FormEvent, useState, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
 
-export default function RegisterPage() {
+function RegisterForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const invite = searchParams.get("invite");
+  const emailPrefill = searchParams.get("email") ?? "";
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
 
@@ -24,7 +27,11 @@ export default function RegisterPage() {
         setError(res.error.message ?? "Could not register");
         return;
       }
-      router.push("/onboarding");
+      if (invite && /^[a-f0-9]{20,}$/i.test(invite)) {
+        router.push(`/invite/${invite}`);
+      } else {
+        router.push("/onboarding");
+      }
       router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not register");
@@ -39,7 +46,11 @@ export default function RegisterPage() {
         <h1 className="page-title" style={{ fontSize: "2rem" }}>
           Create account
         </h1>
-        <p className="page-sub">Email and password only — no SSO in Core.</p>
+        <p className="page-sub">
+          {invite
+            ? "Register with the invited email, then accept the workspace invite."
+            : "Email and password only — no SSO in Core."}
+        </p>
         {error ? <div className="error">{error}</div> : null}
         <form onSubmit={onSubmit}>
           <div className="field">
@@ -48,7 +59,13 @@ export default function RegisterPage() {
           </div>
           <div className="field">
             <label htmlFor="email">Email</label>
-            <input id="email" name="email" type="email" required />
+            <input
+              id="email"
+              name="email"
+              type="email"
+              required
+              defaultValue={emailPrefill}
+            />
           </div>
           <div className="field">
             <label htmlFor="password">Password</label>
@@ -59,9 +76,28 @@ export default function RegisterPage() {
           </button>
         </form>
         <p className="muted" style={{ marginTop: "1.2rem" }}>
-          Already have an account? <Link href="/login">Sign in</Link>
+          Already have an account?{" "}
+          <Link href={invite ? `/login?invite=${encodeURIComponent(invite)}` : "/login"}>
+            Sign in
+          </Link>
         </p>
       </div>
     </div>
+  );
+}
+
+export default function RegisterPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="auth-shell">
+          <div className="auth-card">
+            <p className="muted">Loading…</p>
+          </div>
+        </div>
+      }
+    >
+      <RegisterForm />
+    </Suspense>
   );
 }

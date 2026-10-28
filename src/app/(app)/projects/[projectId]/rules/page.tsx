@@ -5,6 +5,27 @@ import { toggleAutomationRule } from "@/app/actions/rules";
 import { CreateRuleForm } from "@/components/CreateRuleForm";
 import { ProjectViewTabs } from "@/components/ProjectViewTabs";
 
+function summarizeConditions(raw: string) {
+  try {
+    const c = JSON.parse(raw || "{}") as {
+      titleContains?: string;
+      hasAssignee?: boolean;
+      assigneeId?: string;
+      onlyIfIncomplete?: boolean;
+    };
+    const bits: string[] = [];
+    if (c.titleContains) bits.push(`title~"${c.titleContains}"`);
+    if (typeof c.hasAssignee === "boolean") {
+      bits.push(c.hasAssignee ? "assigned" : "unassigned");
+    }
+    if (c.assigneeId) bits.push("specific assignee");
+    if (c.onlyIfIncomplete) bits.push("incomplete only");
+    return bits.length ? ` · if ${bits.join(", ")}` : "";
+  } catch {
+    return "";
+  }
+}
+
 export default async function ProjectRulesPage({
   params,
 }: {
@@ -33,7 +54,9 @@ export default async function ProjectRulesPage({
   return (
     <>
       <h1 className="page-title">{project.name}</h1>
-      <p className="page-sub">Lightweight rules — run on create, assign, or complete.</p>
+      <p className="page-sub">
+        Rules with optional conditions (title contains, assignee, incomplete-only).
+      </p>
       <ProjectViewTabs projectId={project.id} active="Rules" />
       <CreateRuleForm
         projectId={project.id}
@@ -50,6 +73,7 @@ export default async function ProjectRulesPage({
                 <p className="muted" style={{ margin: "0.25rem 0 0" }}>
                   When {r.trigger.replaceAll("_", " ").toLowerCase()} →{" "}
                   {r.action.replaceAll("_", " ").toLowerCase()}
+                  {summarizeConditions(r.conditionConfig)}
                 </p>
               </div>
               <span className="badge">{r.enabled ? "On" : "Off"}</span>

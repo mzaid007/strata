@@ -21,6 +21,10 @@ export async function createAutomationRule(
   const sectionId = String(formData.get("sectionId") ?? "").trim();
   const commentBody = String(formData.get("commentBody") ?? "").trim();
   const assigneeId = String(formData.get("assigneeId") ?? "").trim();
+  const titleContains = String(formData.get("titleContains") ?? "").trim();
+  const hasAssigneeRaw = String(formData.get("hasAssignee") ?? "").trim();
+  const conditionAssigneeId = String(formData.get("conditionAssigneeId") ?? "").trim();
+  const onlyIfIncomplete = formData.get("onlyIfIncomplete") === "on";
 
   if (!projectId) return actionFail("Missing project.");
   if (!name) return actionFail("Rule name is required.", { name: "Required" });
@@ -58,6 +62,29 @@ export async function createAutomationRule(
     actionConfig.assigneeId = assigneeId;
   }
 
+  const conditionConfig: Record<string, string | boolean> = {};
+  if (titleContains) {
+    if (titleContains.length > 120) {
+      return actionFail("Title contains filter is too long.");
+    }
+    conditionConfig.titleContains = titleContains;
+  }
+  if (hasAssigneeRaw === "yes") conditionConfig.hasAssignee = true;
+  if (hasAssigneeRaw === "no") conditionConfig.hasAssignee = false;
+  if (conditionAssigneeId) {
+    const member = await prisma.orgMembership.findUnique({
+      where: {
+        organizationId_userId: {
+          organizationId: org.id,
+          userId: conditionAssigneeId,
+        },
+      },
+    });
+    if (!member) return actionFail("Condition assignee must be a workspace member.");
+    conditionConfig.assigneeId = conditionAssigneeId;
+  }
+  if (onlyIfIncomplete) conditionConfig.onlyIfIncomplete = true;
+
   await prisma.automationRule.create({
     data: {
       organizationId: org.id,
@@ -66,6 +93,7 @@ export async function createAutomationRule(
       trigger,
       action,
       actionConfig: JSON.stringify(actionConfig),
+      conditionConfig: JSON.stringify(conditionConfig),
     },
   });
 
